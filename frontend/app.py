@@ -46,6 +46,22 @@ if st.button("🔍 Get Results"):
                     if "latest_trends" in data:
                         with st.expander("🔥 Latest Tech Trends:"):
                             st.write(data["latest_trends"])
+                    
+                    # User Feedback
+                    st.subheader("Rate the Recommendations")
+                    rating = st.slider("How would you rate these recommendations?", 1, 5, 3)
+                    feedback = st.text_area("Additional feedback (optional):", height=100)
+                    
+                    if st.button("Submit Feedback"):
+                        feedback_response = requests.post(f"{BACKEND_URL}/feedback", json={
+                            "project": project_desc,
+                            "rating": rating,
+                            "feedback": feedback
+                        })
+                        if feedback_response.status_code == 200:
+                            st.success("Thank you for your feedback!")
+                        else:
+                            st.error("Failed to submit feedback. Please try again.")
                 else:
                     st.error("⚠️ Failed to fetch recommendations. Try again.")
             
@@ -62,6 +78,22 @@ if st.button("🔍 Get Results"):
                                 st.write(f"{priority}. {task}")
                         else:
                             st.write("No prioritized tasks available.")
+                    
+                    # User Feedback
+                    st.subheader("Rate the Task Prioritization")
+                    rating = st.slider("How would you rate this task prioritization?", 1, 5, 3)
+                    feedback = st.text_area("Additional feedback (optional):", height=100)
+                    
+                    if st.button("Submit Feedback"):
+                        feedback_response = requests.post(f"{BACKEND_URL}/feedback", json={
+                            "project": project_desc,
+                            "rating": rating,
+                            "feedback": feedback
+                        })
+                        if feedback_response.status_code == 200:
+                            st.success("Thank you for your feedback!")
+                        else:
+                            st.error("Failed to submit feedback. Please try again.")
                 else:
                     st.error("⚠️ Failed to fetch task prioritization. Try again.")
     else:

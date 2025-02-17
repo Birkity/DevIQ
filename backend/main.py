@@ -24,6 +24,8 @@ recommendation_collection = db.recommendations
 # Define request and response models
 class ProjectRequest(BaseModel):
     project: str
+    rating: int
+    feedback: str
 
 class RecommendationResponse(BaseModel):
     stack: List[str]
@@ -100,7 +102,12 @@ async def prioritize_tasks(request: ProjectRequest):
 # Endpoint for storing user feedback
 @app.post("/feedback")
 async def store_feedback(request: ProjectRequest):
-    feedback_collection.insert_one({"project": request.project})
+    feedback_data = {
+        "project": request.project,
+        "rating": request.rating,
+        "feedback": request.feedback
+    }
+    feedback_collection.insert_one(feedback_data)
     return {"message": "Feedback stored successfully"}
 
 # WebSocket for real-time chat
