@@ -10,6 +10,14 @@ BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
 # Streamlit App Configuration
 st.set_page_config(page_title="DevIQ", page_icon="🤖", layout="wide")
 
+# Custom CSS for themes and animations
+with open("frontend/style.css") as f:
+    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
+# Theme toggle
+theme = st.sidebar.radio("Choose Theme", ["Light", "Dark"])
+st.markdown(f'<body class="{theme.lower()}">', unsafe_allow_html=True)
+
 # App Title
 st.title("🚀 DevIQ: AI-Powered Tech Stack & Task Optimizer")
 
@@ -26,18 +34,18 @@ if st.button("🔍 Get Recommendations"):
                 st.success("✅ Recommendations Generated!")
                 
                 # Display Recommended Tech Stack
-                st.subheader("💡 Recommended Tech Stack:")
-                st.write(", ".join(data["stack"]))
+                with st.expander("💡 Recommended Tech Stack:"):
+                    st.write(", ".join(data["stack"]))
 
                 # Display Task Breakdown
-                st.subheader("📌 Task Breakdown:")
-                for task in data["tasks"]:
-                    st.write(f"- {task}")
+                with st.expander("📌 Task Breakdown:"):
+                    for task in data["tasks"]:
+                        st.write(f"- {task}")
 
                 # Display Latest Tech Trends
                 if "latest_trends" in data:
-                    st.subheader("🔥 Latest Tech Trends:")
-                    st.write(data["latest_trends"])
+                    with st.expander("🔥 Latest Tech Trends:"):
+                        st.write(data["latest_trends"])
 
             else:
                 st.error("⚠️ Failed to fetch recommendations. Try again.")
