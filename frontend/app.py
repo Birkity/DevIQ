@@ -11,7 +11,7 @@ BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
 st.set_page_config(page_title="DevIQ", page_icon="🤖", layout="wide")
 
 # Custom CSS for themes and animations
-with open("frontend/style.css") as f:
+with open("style.css") as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
 # Theme toggle
@@ -36,6 +36,14 @@ if st.button("🔍 Get Recommendations"):
                 # Display Recommended Tech Stack
                 with st.expander("💡 Recommended Tech Stack:"):
                     st.write(", ".join(data["stack"]))
+
+                # Display Task Prioritization
+                with st.expander("📊 Task Prioritization:"):
+                    if "prioritized_tasks" in data:
+                        for priority, task in enumerate(data["prioritized_tasks"], start=1):
+                            st.write(f"{priority}. {task}")
+                    else:
+                        st.write("No prioritized tasks available.")
 
                 # Display Task Breakdown
                 with st.expander("📌 Task Breakdown:"):
