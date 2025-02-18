@@ -11,7 +11,7 @@ BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
 st.set_page_config(page_title="DevIQ", page_icon="🤖", layout="centered")
 
 # Custom CSS for themes and animations
-with open("style.css") as f:
+with open("frontend/style.css") as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
 # Theme toggle
