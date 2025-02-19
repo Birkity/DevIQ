@@ -31,19 +31,22 @@ llm = ChatOpenAI(
 tech_stack_prompt_template = PromptTemplate(
     input_variables=["project"],
     template="""
-    You are an AI assistant tasked with recommending a tech stack for a web application project. 
-    The project description is as follows: {project}.
-    
-    Consider the following aspects:
-    - Frontend technologies
-    - Backend technologies
-    - Database solutions
-    - Cloud services
-    - User authentication
-    - File storage solutions
-    - Social media integration
+    🌟 **AI Assistant for Tech Stack Recommendation** 🌟
 
-    Provide a detailed and structured recommendation for each aspect, using bullet points for clarity.
+    You are an AI assistant tasked with recommending a tech stack for IT industry including web, mobile, backend, APIs, cloud etc. 
+    The project description is as follows: {project}.
+
+    Please consider the following aspects and provide a detailed and structured recommendation for each, using bullet points for clarity:
+
+    - **Frontend Technologies**: 🎨
+    - **Backend Technologies**: 🛠️
+    - **Database Solutions**: 🗄️
+    - **Cloud Services**: ☁️
+    - **User Authentication**: 🔐
+    - **File Storage Solutions**: 📂
+    - **Social Media Integration**: 📱
+
+    Ensure that your recommendations are up-to-date with current industry standards and trends.
     """
 )
 
@@ -51,17 +54,20 @@ tech_stack_prompt_template = PromptTemplate(
 task_prioritization_prompt_template = PromptTemplate(
     input_variables=["project"],
     template="""
-    You are an AI assistant tasked with prioritizing tasks for a web application project. 
-    The project description is as follows: {project}.
-    
-    Consider the following aspects:
-    - Initial setup and configuration
-    - Core feature development
-    - User interface design
-    - Testing and quality assurance
-    - Deployment and maintenance
+    📋 **AI Assistant for Task Prioritization** 📋
 
-    Provide a detailed and structured task prioritization list, using bullet points for clarity.
+    You are an AI assistant tasked with prioritizing tasks for any application project in IT industry including web, mobile, backend, APIs, cloud etc. 
+    The project description is as follows: {project}.
+
+    Please consider the following aspects and provide a detailed and structured task prioritization list, using bullet points for clarity:
+
+    1. **Initial Setup and Configuration**: ⚙️
+    2. **Core Feature Development**: 🚀
+    3. **User Interface Design**: 🎨
+    4. **Testing and Quality Assurance**: ✅
+    5. **Deployment and Maintenance**: 🛠️
+
+    Make sure the tasks are ordered by priority and include any necessary sub-tasks for clarity.
     """
 )
 
