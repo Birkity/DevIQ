@@ -43,7 +43,7 @@ if st.button("🔍 Get Results"):
                         for line in data["stack"]:
                             st.markdown(f"- {line}")
 
-                    # User Feedback
+                    # User Feedback for Recommendations
                     st.subheader("Rate the Recommendations")
                     rating = st.slider("How would you rate these recommendations?", 1, 5, 3, key="recommendation_rating")
                     feedback = st.text_area("Additional feedback (optional):", height=100, key="recommendation_feedback")
@@ -51,6 +51,7 @@ if st.button("🔍 Get Results"):
                     if st.button("Submit Feedback", key="submit_recommendation_feedback"):
                         feedback_response = requests.post(f"{BACKEND_URL}/feedback", json={
                             "project": project_desc,
+                            "recommendation_or_prioritization": "\n".join(data["stack"]),
                             "rating": rating,
                             "feedback": feedback
                         })
@@ -72,7 +73,7 @@ if st.button("🔍 Get Results"):
                         for priority, task in enumerate(data["prioritized_tasks"], start=1):
                             st.markdown(f"**{priority}.** {task}")
                     
-                    # User Feedback
+                    # User Feedback for Task Prioritization
                     st.subheader("Rate the Task Prioritization")
                     rating = st.slider("How would you rate this task prioritization?", 1, 5, 3)
                     feedback = st.text_area("Additional feedback (optional):", height=100)
@@ -80,6 +81,7 @@ if st.button("🔍 Get Results"):
                     if st.button("Submit Feedback"):
                         feedback_response = requests.post(f"{BACKEND_URL}/feedback", json={
                             "project": project_desc,
+                            "recommendation_or_prioritization": "\n".join(data["prioritized_tasks"]),
                             "rating": rating,
                             "feedback": feedback
                         })

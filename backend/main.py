@@ -157,10 +157,11 @@ def store_feedback():
     project_desc = data.get('project', '')
     rating = data.get('rating', '')
     feedback = data.get('feedback', '')
-    
-    feedback_data = [project_desc, rating, feedback]
+    recommendation_or_prioritization = data.get('recommendation_or_prioritization', '')
+
+    feedback_data = [project_desc, recommendation_or_prioritization, rating, feedback]
     write_to_csv('feedback.csv', feedback_data)
-    
+
     return jsonify({"message": "Feedback stored successfully"})
 
 if __name__ == '__main__':
