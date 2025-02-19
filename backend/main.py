@@ -5,24 +5,23 @@ from langchain.prompts import PromptTemplate
 from langchain.chat_models import ChatOpenAI
 import os
 from dotenv import load_dotenv
-import requests
 import csv
 
 # Load environment variables
 load_dotenv()
-OPENROUTER_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENROUTER_BASE_URL = os.getenv("OPENROUTER_BASE_URL")
 GITHUB_API_TOKEN = os.getenv("GITHUB_API_TOKEN")
 
-if not OPENROUTER_API_KEY or not OPENROUTER_BASE_URL:
-    raise ValueError("Missing API keys! Ensure OPENROUTER_API_KEY and OPENROUTER_BASE_URL are set.")
+if not OPENAI_API_KEY or not OPENROUTER_BASE_URL:
+    raise ValueError("Missing API keys! Ensure OPENAI_API_KEY and OPENROUTER_BASE_URL are set.")
 
 # Initialize Flask app
 app = Flask(__name__)
 
 # Initialize LangChain with OpenRouter
 llm = ChatOpenAI(
-    openai_api_key=OPENROUTER_API_KEY,
+    openai_api_key=OPENAI_API_KEY,
     openai_api_base=OPENROUTER_BASE_URL,
     model_name="gpt-3.5-turbo",
 )
@@ -72,7 +71,11 @@ task_prioritization_prompt_template = PromptTemplate(
 )
 
 # Initialize memory for conversation context
-memory = ConversationBufferMemory(memory_key="history", input_key="project", max_token_limit=2000, max_messages=20)
+memory = ConversationBufferMemory(
+    memory_key="history",
+    input_key="project",
+    max_token_limit=2000  
+)
 
 # Create a custom chain class
 class CustomLLMChain(LLMChain):
@@ -117,17 +120,22 @@ def recommend_tech_stack():
     if not project_desc:
         return jsonify({"error": "Project description is required"}), 400
 
-    # Use the custom chain to generate recommendations
-    response = tech_stack_chain.run({"project": project_desc})
-    recommended_stack = response.strip().split("\n")
+    try:
+        # Use the custom chain to generate recommendations
+        response = tech_stack_chain.run({"project": project_desc})
+        recommended_stack = response.strip().split("\n")
 
-    if not recommended_stack or recommended_stack == [""]:
-        return jsonify({"error": "No recommendations found"}), 404
+        if not recommended_stack or recommended_stack == [""]:
+            return jsonify({"error": "No recommendations found"}), 404
 
-    # Store recommendation in CSV
-    write_to_csv('recommendations.csv', [project_desc, *recommended_stack])
+        # Store recommendation in CSV
+        write_to_csv('recommendations.csv', [project_desc, *recommended_stack])
 
-    return jsonify({"stack": recommended_stack})
+        return jsonify({"stack": recommended_stack})
+    except Exception as e:
+        # Log the exception and return an error response
+        print(f"Error generating recommendations: {e}")
+        return jsonify({"error": "Internal server error"}), 500
 
 # Endpoint for task prioritization
 @app.route('/prioritize_tasks', methods=['POST'])
