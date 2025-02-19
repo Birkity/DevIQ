@@ -11,3 +11,4 @@ venv.bak/
 *.env
 .DS_Store
 .env
+*.csv

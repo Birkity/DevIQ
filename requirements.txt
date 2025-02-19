@@ -1,6 +1,6 @@
-streamlit
+flask
 requests
 python-dotenv
-fastapi
-uvicorn
-langchain 
+pymongo
+langchain
+langchain_community 

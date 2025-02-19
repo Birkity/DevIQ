@@ -1,128 +1,161 @@
-from fastapi import FastAPI, HTTPException, WebSocket
-from pydantic import BaseModel
-from typing import List, Dict
-from pymongo import MongoClient
-import openai
-from transformers import pipeline
+from flask import Flask, request, jsonify
+from langchain.chains import LLMChain
+from langchain.memory import ConversationBufferMemory
+from langchain.prompts import PromptTemplate
+from langchain.chat_models import ChatOpenAI
 import os
+from dotenv import load_dotenv
 import requests
+import csv
 
 # Load environment variables
-openai.api_key = os.getenv("OPENAI_API_KEY")
-GITHUB_API_TOKEN = os.getenv("GITHUB_API_TOKEN")
+load_dotenv()
+OPENROUTER_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENROUTER_BASE_URL = os.getenv("OPENROUTER_BASE_URL")
+GITHUB_API_TOKEN = os.getenv("GITHUB_API_TOKEN")
 
-# Initialize FastAPI app
-app = FastAPI()
+if not OPENROUTER_API_KEY or not OPENROUTER_BASE_URL:
+    raise ValueError("Missing API keys! Ensure OPENROUTER_API_KEY and OPENROUTER_BASE_URL are set.")
 
-# MongoDB setup
-client = MongoClient("mongodb://localhost:27017/")
-db = client.deviq
-feedback_collection = db.feedback
-recommendation_collection = db.recommendations
+# Initialize Flask app
+app = Flask(__name__)
 
-# Define request and response models
-class ProjectRequest(BaseModel):
-    project: str
-    rating: int
-    feedback: str
+# Initialize LangChain with OpenRouter
+llm = ChatOpenAI(
+    openai_api_key=OPENROUTER_API_KEY,
+    openai_api_base=OPENROUTER_BASE_URL,
+    model_name="gpt-3.5-turbo",
+)
 
-class RecommendationResponse(BaseModel):
-    stack: List[str]
-    latest_trends: str
+# Define a prompt template for tech stack recommendation
+tech_stack_prompt_template = PromptTemplate(
+    input_variables=["project"],
+    template="""
+    You are an AI assistant tasked with recommending a tech stack for a web application project. 
+    The project description is as follows: {project}.
+    
+    Consider the following aspects:
+    - Frontend technologies
+    - Backend technologies
+    - Database solutions
+    - Cloud services
+    - User authentication
+    - File storage solutions
+    - Social media integration
 
-class TaskPrioritizationResponse(BaseModel):
-    prioritized_tasks: List[str]
+    Provide a detailed and structured recommendation for each aspect, using bullet points for clarity.
+    """
+)
 
-# Initialize NLP models
-summarizer = pipeline("summarization", model="t5-base")
+# Define a prompt template for task prioritization
+task_prioritization_prompt_template = PromptTemplate(
+    input_variables=["project"],
+    template="""
+    You are an AI assistant tasked with prioritizing tasks for a web application project. 
+    The project description is as follows: {project}.
+    
+    Consider the following aspects:
+    - Initial setup and configuration
+    - Core feature development
+    - User interface design
+    - Testing and quality assurance
+    - Deployment and maintenance
 
-# Mock data for demonstration purposes
-tech_stacks = {
-    "web": ["React", "Node.js", "MongoDB"],
-    "data": ["Python", "Pandas", "Scikit-learn"],
-    "mobile": ["Flutter", "Firebase"]
-}
+    Provide a detailed and structured task prioritization list, using bullet points for clarity.
+    """
+)
 
-latest_trends = "AI, Blockchain, Quantum Computing"
+# Initialize memory for conversation context
+memory = ConversationBufferMemory(memory_key="history", input_key="project", max_token_limit=2000, max_messages=20)
 
-prioritized_tasks = [
-    "Define project scope",
-    "Research technology options",
-    "Develop MVP",
-    "Test and iterate"
-]
+# Create a custom chain class
+class CustomLLMChain(LLMChain):
+    def __init__(self, llm, memory, prompt):
+        super().__init__(llm=llm, memory=memory, prompt=prompt)
 
-# External API functions
-def fetch_github_trends():
-    headers = {"Authorization": f"token {GITHUB_API_TOKEN}"}
-    response = requests.get("https://api.github.com/search/repositories?q=stars:>10000&sort=stars", headers=headers)
-    return response.json()["items"][:5]  # Return top 5 trending repos
+    def run(self, input_data):
+        formatted_input = {
+            "project": input_data.get("project", ""),
+            "history": self.memory.buffer,  # Include conversation history
+        }
+        
+        response = self.predict(**formatted_input)
+        self.memory.save_context({"project": input_data.get("project", "")}, {"output": response})
+        return response
+
+# Create custom chains for tech stack recommendation and task prioritization
+tech_stack_chain = CustomLLMChain(
+    llm=llm,
+    memory=memory,
+    prompt=tech_stack_prompt_template
+)
+
+task_prioritization_chain = CustomLLMChain(
+    llm=llm,
+    memory=memory,
+    prompt=task_prioritization_prompt_template
+)
+
+# Function to write data to a CSV file
+def write_to_csv(file_path, data):
+    with open(file_path, mode='a', newline='', encoding='utf-8') as file:
+        writer = csv.writer(file)
+        writer.writerow(data)
 
 # Endpoint for tech stack recommendation
-@app.post("/recommend", response_model=RecommendationResponse)
-async def recommend_tech_stack(request: ProjectRequest):
-    # Use OpenAI API to generate recommendations
-    response = requests.post(
-        f"{OPENROUTER_BASE_URL}/openai/completions",
-        headers={"Authorization": f"Bearer {openai.api_key}"},
-        json={
-            "model": "text-davinci-003",
-            "prompt": f"Recommend a tech stack for the following project: {request.project}",
-            "max_tokens": 150
-        }
-    )
-    response_data = response.json()
-    recommended_stack = response_data['choices'][0]['text'].strip().split(", ")
-    
-    if not recommended_stack:
-        raise HTTPException(status_code=404, detail="No recommendations found")
-    
-    # Fetch external data
-    github_trends = fetch_github_trends()
-    
-    # Store recommendation in MongoDB
-    recommendation_collection.insert_one({
-        "project": request.project,
-        "stack": recommended_stack,
-        "github_trends": github_trends
-    })
-    
-    return RecommendationResponse(stack=recommended_stack, latest_trends=latest_trends)
+@app.route('/recommend', methods=['POST'])
+def recommend_tech_stack():
+    data = request.json
+    project_desc = data.get('project', '')
+
+    if not project_desc:
+        return jsonify({"error": "Project description is required"}), 400
+
+    # Use the custom chain to generate recommendations
+    response = tech_stack_chain.run({"project": project_desc})
+    recommended_stack = response.strip().split("\n")
+
+    if not recommended_stack or recommended_stack == [""]:
+        return jsonify({"error": "No recommendations found"}), 404
+
+    # Store recommendation in CSV
+    write_to_csv('recommendations.csv', [project_desc, *recommended_stack])
+
+    return jsonify({"stack": recommended_stack})
 
 # Endpoint for task prioritization
-@app.post("/prioritize_tasks", response_model=TaskPrioritizationResponse)
-async def prioritize_tasks(request: ProjectRequest):
-    # Use NLP model to break down tasks
-    summary = summarizer(request.project, max_length=50, min_length=25, do_sample=False)
-    tasks = summary[0]['summary_text'].split(". ")
-    return TaskPrioritizationResponse(prioritized_tasks=tasks)
+@app.route('/prioritize_tasks', methods=['POST'])
+def prioritize_tasks():
+    data = request.json
+    project_desc = data.get('project', '')
+
+    if not project_desc:
+        return jsonify({"error": "Project description is required"}), 400
+
+    # Use the custom chain to generate task prioritization
+    response = task_prioritization_chain.run({"project": project_desc})
+    prioritized_tasks = response.strip().split("\n")
+
+    if not prioritized_tasks or prioritized_tasks == [""]:
+        return jsonify({"error": "No tasks prioritized"}), 404
+
+    # Store task prioritization in CSV
+    write_to_csv('task_prioritizations.csv', [project_desc, *prioritized_tasks])
+
+    return jsonify({"prioritized_tasks": prioritized_tasks})
 
 # Endpoint for storing user feedback
-@app.post("/feedback")
-async def store_feedback(request: ProjectRequest):
-    feedback_data = {
-        "project": request.project,
-        "rating": request.rating,
-        "feedback": request.feedback
-    }
-    feedback_collection.insert_one(feedback_data)
-    return {"message": "Feedback stored successfully"}
+@app.route('/feedback', methods=['POST'])
+def store_feedback():
+    data = request.json
+    project_desc = data.get('project', '')
+    rating = data.get('rating', '')
+    feedback = data.get('feedback', '')
+    
+    feedback_data = [project_desc, rating, feedback]
+    write_to_csv('feedback.csv', feedback_data)
+    
+    return jsonify({"message": "Feedback stored successfully"})
 
-# WebSocket for real-time chat
-@app.websocket("/ws/chat")
-async def websocket_endpoint(websocket: WebSocket):
-    await websocket.accept()
-    while True:
-        data = await websocket.receive_text()
-        response = requests.post(
-            f"{OPENROUTER_BASE_URL}/openai/completions",
-            headers={"Authorization": f"Bearer {openai.api_key}"},
-            json={
-                "model": "text-davinci-003",
-                "prompt": f"Chat with the user: {data}",
-                "max_tokens": 150
-            }
-        )
-        response_data = response.json()
-        await websocket.send_text(response_data['choices'][0]['text'].strip()) 
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=8000, debug=True)

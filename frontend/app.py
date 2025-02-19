@@ -40,19 +40,15 @@ if st.button("🔍 Get Results"):
                     
                     # Display Recommended Tech Stack
                     with st.expander("💡 Recommended Tech Stack:"):
-                        st.write(", ".join(data["stack"]))
+                        for line in data["stack"]:
+                            st.markdown(f"- {line}")
 
-                    # Display Latest Tech Trends
-                    if "latest_trends" in data:
-                        with st.expander("🔥 Latest Tech Trends:"):
-                            st.write(data["latest_trends"])
-                    
                     # User Feedback
                     st.subheader("Rate the Recommendations")
-                    rating = st.slider("How would you rate these recommendations?", 1, 5, 3)
-                    feedback = st.text_area("Additional feedback (optional):", height=100)
+                    rating = st.slider("How would you rate these recommendations?", 1, 5, 3, key="recommendation_rating")
+                    feedback = st.text_area("Additional feedback (optional):", height=100, key="recommendation_feedback")
                     
-                    if st.button("Submit Feedback"):
+                    if st.button("Submit Feedback", key="submit_recommendation_feedback"):
                         feedback_response = requests.post(f"{BACKEND_URL}/feedback", json={
                             "project": project_desc,
                             "rating": rating,
@@ -73,11 +69,8 @@ if st.button("🔍 Get Results"):
                     
                     # Display Task Prioritization
                     with st.expander("📊 Task Prioritization:"):
-                        if "prioritized_tasks" in data:
-                            for priority, task in enumerate(data["prioritized_tasks"], start=1):
-                                st.write(f"{priority}. {task}")
-                        else:
-                            st.write("No prioritized tasks available.")
+                        for priority, task in enumerate(data["prioritized_tasks"], start=1):
+                            st.markdown(f"**{priority}.** {task}")
                     
                     # User Feedback
                     st.subheader("Rate the Task Prioritization")
@@ -102,4 +95,3 @@ if st.button("🔍 Get Results"):
 # Footer
 st.markdown("---")
 st.markdown("💻 Built with ❤️ using Streamlit & FastAPI")
-
