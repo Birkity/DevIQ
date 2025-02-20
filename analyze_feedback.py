@@ -17,11 +17,14 @@ def analyze_feedback(file_path):
     feedback_counter = Counter(feedback_texts)
     common_feedback = feedback_counter.most_common(5)
 
+    # Output results to a file
+    with open('feedback_analysis.txt', 'w') as f:
+        f.write(f"Average Rating: {average_rating}\n")
+        f.write("Common Feedback Themes:\n")
+        for feedback, count in common_feedback:
+            f.write(f"- {feedback} ({count} times)\n")
+
     return average_rating, common_feedback
 
 if __name__ == "__main__":
-    avg_rating, common_feedback = analyze_feedback('feedback.csv')
-    print(f"Average Rating: {avg_rating}")
-    print("Common Feedback Themes:")
-    for feedback, count in common_feedback:
-        print(f"- {feedback} ({count} times)") 
+    analyze_feedback('feedback.csv') 

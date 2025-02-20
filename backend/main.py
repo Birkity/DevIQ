@@ -6,6 +6,7 @@ from langchain.chat_models import ChatOpenAI
 import os
 from dotenv import load_dotenv
 import csv
+import subprocess
 
 # Load environment variables
 load_dotenv()
@@ -171,6 +172,19 @@ def store_feedback():
     write_to_csv('feedback.csv', feedback_data)
 
     return jsonify({"message": "Feedback stored successfully"})
+
+# Function to analyze feedback and update prompts/models
+def analyze_and_update():
+    # Run the feedback analysis script
+    subprocess.run(["python", "analyze_feedback.py"])
+
+    # Read the analysis results
+    with open('feedback_analysis.txt', 'r') as f:
+        analysis_results = f.read()
+
+    print("Feedback Analysis Results:")
+    print(analysis_results)
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000, debug=True)
