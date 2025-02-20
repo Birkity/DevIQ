@@ -89,7 +89,7 @@ Contributions are welcome! If you'd like to contribute, please follow these step
 1. **Fork the repository**.
 2. **Create a new branch**:
    ```bash
-   git checkout -b feature/your-feature-name
+   git checkout -b feature/your-feature-nam
    ```
 3. **Commit your changes**:
    ```bash
@@ -130,7 +130,7 @@ This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) f
 For any questions or feedback, feel free to reach out:
 
 - **Email**: lily.yishak2@gmail.com
-- **GitHub**: [yourusername](https://github.com/Birkity)
+- **GitHub**: [Birkity](https://github.com/Birkity)
 
 
 ---
