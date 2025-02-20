@@ -14,10 +14,6 @@ st.set_page_config(page_title="DevIQ", page_icon="🤖", layout="centered")
 with open("frontend/style.css") as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
-# Theme toggle
-theme = st.sidebar.radio("Choose Theme", ["Light", "Dark"])
-st.markdown(f'<body class="{theme.lower()}">', unsafe_allow_html=True)
-
 # Navigation
 st.sidebar.title("Navigation")
 option = st.sidebar.radio("Go to", ["Tech Stack Recommendation", "Task Prioritization"])
