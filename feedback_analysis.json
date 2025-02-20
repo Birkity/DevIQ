@@ -1,0 +1,21 @@
+{
+    "average_rating": 3.5,
+    "common_feedback": [
+        {
+            "feedback": "its really good",
+            "count": 1
+        },
+        {
+            "feedback": "its good",
+            "count": 1
+        },
+        {
+            "feedback": "its looks nice but i want it to use time table and other visualization",
+            "count": 1
+        },
+        {
+            "feedback": "the recommendation doesnt include timetable",
+            "count": 1
+        }
+    ]
+}

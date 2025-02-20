@@ -7,6 +7,7 @@ import os
 import csv
 import subprocess
 import json
+import requests
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -28,9 +29,11 @@ llm = ChatOpenAI(
     model_name="gpt-3.5-turbo",
 )
 
-# Load Feedback Analysis
+# File paths
 ANALYSIS_FILE = "feedback_analysis.json"
+FEEDBACK_FILE = "feedback.csv"
 
+# Load Feedback Analysis
 def load_feedback_analysis():
     if os.path.exists(ANALYSIS_FILE):
         with open(ANALYSIS_FILE, "r") as f:
@@ -38,97 +41,87 @@ def load_feedback_analysis():
     return {"average_rating": 0, "common_feedback": []}
 
 feedback_analysis = load_feedback_analysis()
-average_rating = feedback_analysis["average_rating"]
-common_feedback = [fb[0] for fb in feedback_analysis["common_feedback"]]
+average_rating = feedback_analysis.get("average_rating", 0)
+common_feedback = feedback_analysis.get("common_feedback", [])
+
+# Extract only feedback text to adjust prompts
+common_feedback_texts = [fb[0] if isinstance(fb, (list, tuple)) and len(fb) > 0 else str(fb) for fb in common_feedback]
 
 # Dynamically adjust the prompt template based on feedback trends
-if "too generic" in common_feedback:
+if "too generic" in common_feedback_texts:
     prompt_adjustment = "Provide more project-specific recommendations."
-elif "too complex" in common_feedback:
+elif "too complex" in common_feedback_texts:
     prompt_adjustment = "Use simpler explanations and beginner-friendly options."
 else:
     prompt_adjustment = ""
 
+# Function to fetch GitHub repository data to enhance recommendations
+def fetch_github_repos(topic):
+    url = f"https://api.github.com/search/repositories?q={topic}&sort=stars&order=desc"
+    headers = {"Authorization": f"token {GITHUB_API_TOKEN}"} if GITHUB_API_TOKEN else {}
+    
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        repos = response.json().get("items", [])[:5]
+        return [{"name": repo["name"], "url": repo["html_url"], "description": repo["description"]} for repo in repos]
+    return []
+
 # Define a prompt template for tech stack recommendation
 tech_stack_prompt_template = PromptTemplate(
     input_variables=["project"],
-    template="""
+    template=f"""
     🌟 **AI-Powered Tech Stack Recommendation** 🌟
 
     You are an AI assistant specializing in **technology stack recommendations** for the IT industry, including **web, mobile, backend, APIs, cloud, and DevOps**.  
+    {prompt_adjustment}
 
-    🔍 **Project Description:** {project}  
+    🔍 **Project Description:** {{project}}  
 
-    Provide a **detailed, structured** recommendation considering scalability, security, performance, and ease of integration. Your response should **clearly justify** each choice.  
+    Provide a **detailed, structured** recommendation considering scalability, security, performance, and ease of integration.
 
     ### **Recommended Tech Stack**
     - **Frontend Technologies (UI/UX):** 🎨  
-      _(Best frameworks/libraries for a responsive and dynamic UI, including state management and styling options.)_  
-
     - **Backend Technologies (Business Logic & APIs):** 🛠️  
-      _(Programming languages, frameworks, and architectures like monolithic/microservices.)_  
-
     - **Database Solutions (Storage & Performance):** 🗄️  
-      _(SQL vs NoSQL, indexing strategies, and real-time data needs.)_  
-
     - **Cloud & DevOps (Scalability & Deployment):** ☁️  
-      _(Hosting platforms, CI/CD pipelines, and containerization tools.)_  
-
     - **User Authentication & Security:** 🔐  
-      _(OAuth, JWT, Multi-Factor Authentication, encryption techniques.)_  
-
     - **File Storage & CDN (Media & Static Content):** 📂  
-      _(Best storage solutions for performance, cost, and reliability.)_  
-
     - **Third-Party Integrations & APIs:** 🔗  
-      _(CRM, payment gateways, analytics, and external services.)_  
 
-    ✅ **Ensure recommendations align with industry best practices, emerging trends, and project-specific needs.** Provide **alternative options** where relevant.  
+    ✅ **Ensure recommendations align with industry best practices and emerging trends.**
     """
 )
-
 
 # Define a prompt template for task prioritization
 task_prioritization_prompt_template = PromptTemplate(
     input_variables=["project"],
-    template="""
+    template=f"""
     📋 **AI-Powered Task Prioritization for Project Execution** 📋
 
-    You are an AI assistant specializing in **task management and workflow optimization** for IT projects, including **web, mobile, backend, APIs, and cloud solutions**.  
+    You are an AI assistant specializing in **task management and workflow optimization** for IT projects.  
+    {prompt_adjustment}
 
-    🔍 **Project Description:** {project}  
+    🔍 **Project Description:** {{project}}  
 
-    Provide a **structured, step-by-step** task prioritization plan, considering dependencies, team workload, and deadlines.  
+    Provide a **structured, step-by-step** task prioritization plan.
 
     ### **Optimized Task Execution Plan**  
     **1️⃣ Initial Setup & Planning** ⚙️  
-       - _(Project requirements, tech stack decisions, repository setup, cloud configurations.)_  
-
     **2️⃣ Core Feature Development** 🚀  
-       - _(Backend APIs, database schema design, authentication, main business logic.)_  
-
     **3️⃣ User Interface & Experience** 🎨  
-       - _(Frontend development, component architecture, responsiveness, accessibility.)_  
-
     **4️⃣ Testing & Quality Assurance** ✅  
-       - _(Unit testing, integration testing, security testing, bug fixes.)_  
-
     **5️⃣ Deployment & Optimization** 🚀  
-       - _(CI/CD setup, cloud deployment, scalability tests, load balancing.)_  
-
     **6️⃣ Post-Launch & Maintenance** 🔄  
-       - _(Monitoring, user feedback integration, security patches, performance updates.)_  
 
-    ✅ **Ensure tasks are logically ordered with clear dependencies. Provide additional sub-tasks if necessary for complex implementations.**  
+    ✅ **Ensure tasks are logically ordered with clear dependencies.**  
     """
 )
-
 
 # Initialize memory for conversation context
 memory = ConversationBufferMemory(
     memory_key="history",
     input_key="project",
-    max_token_limit=2000  
+    max_token_limit=2000
 )
 
 # Custom LLM Chain
@@ -139,7 +132,7 @@ class CustomLLMChain(LLMChain):
     def run(self, input_data):
         formatted_input = {
             "project": input_data.get("project", ""),
-            "history": self.memory.buffer,  # Include conversation history
+            "history": self.memory.buffer,
         }
         response = self.predict(**formatted_input)
         self.memory.save_context({"project": input_data.get("project", "")}, {"output": response})
@@ -156,7 +149,7 @@ def write_to_csv(file_path, data):
     with open(file_path, mode='a', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
         if not file_exists:
-            writer.writerow(["Project", "Output"])  # Write header if file does not exist
+            writer.writerow(["Project", "Output"])
         writer.writerow(data)
 
 # Endpoint for tech stack recommendation
@@ -170,10 +163,10 @@ def recommend_tech_stack():
 
     try:
         response = tech_stack_chain.run({"project": project_desc})
-        recommended_stack = response.strip().split("\n")
-        write_to_csv('recommendations.csv', [project_desc, *recommended_stack])
+        github_repos = fetch_github_repos(project_desc)
+        write_to_csv('recommendations.csv', [project_desc, response])
 
-        return jsonify({"stack": recommended_stack})
+        return jsonify({"stack": response, "github_repos": github_repos})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -188,28 +181,13 @@ def prioritize_tasks():
 
     try:
         response = task_prioritization_chain.run({"project": project_desc})
-        prioritized_tasks = response.strip().split("\n")
-        write_to_csv('task_prioritizations.csv', [project_desc, *prioritized_tasks])
+        write_to_csv('task_prioritizations.csv', [project_desc, response])
 
-        return jsonify({"prioritized_tasks": prioritized_tasks})
+        return jsonify({"prioritized_tasks": response})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# Endpoint for storing user feedback
-@app.route('/feedback', methods=['POST'])
-def store_feedback():
-    data = request.json
-    project_desc = data.get('project', '')
-    rating = data.get('rating', '')
-    feedback = data.get('feedback', '')
-    recommendation_or_prioritization = data.get('recommendation_or_prioritization', '')
-
-    feedback_data = [project_desc, recommendation_or_prioritization, rating, feedback]
-    write_to_csv('feedback.csv', feedback_data)
-
-    return jsonify({"message": "Feedback stored successfully"}), 200
-
-# Function to analyze feedback and update prompt
+# Endpoint for analyzing feedback
 @app.route('/analyze_feedback', methods=['POST'])
 def analyze_and_update():
     subprocess.run(["python", "analyze_feedback.py"])

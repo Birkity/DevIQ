@@ -109,7 +109,13 @@ elif page == "Feedback & Analysis":
                 analysis = response.json()
                 st.success("✅ Feedback Analysis Completed!")
                 st.write(f"**Average Rating:** {analysis['analysis']['average_rating']}")
-                st.write(f"**Common Feedback Trends:** {', '.join([fb[0] for fb in analysis['analysis']['common_feedback']])}")
+                # Ensure the data is correctly structured
+                common_feedback = analysis.get('analysis', {}).get('common_feedback', [])
+
+                common_feedback_texts = [fb[0] if isinstance(fb, (list, tuple)) and len(fb) > 0 else str(fb) for fb in common_feedback]
+
+                st.write(f"**Common Feedback Trends:** {', '.join(common_feedback_texts) if common_feedback_texts else 'No feedback trends available.'}")
+
             else:
                 st.error("⚠️ Error fetching feedback analysis.")
 
