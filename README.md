@@ -1,17 +1,25 @@
 
----
 
 # 🚀 DevIQ: AI-Powered Tech Stack & Task Optimizer 🤖
 
-**DevIQ** is an AI-driven application designed to assist developers and project managers in optimizing their tech stack choices and task prioritization for IT projects. Leveraging the power of OpenAI's language models, DevIQ provides intelligent recommendations and prioritizations tailored to your project needs.
+**DevIQ** is an AI-driven application that helps developers and project managers **optimize their tech stack choices** and **prioritize tasks** efficiently. By leveraging OpenAI’s **language models**, GitHub repository data, and user feedback, **DevIQ continuously improves its recommendations** to align with the latest industry trends.
 
 ---
 
 ## ✨ Features
 
-- **🔧 Tech Stack Recommendation**: Get AI-generated suggestions for the best technologies to use for your project, covering frontend, backend, databases, cloud services, and more.
-- **📋 Task Prioritization**: Receive a structured list of prioritized tasks to streamline your project development process.
-- **📝 User Feedback**: Collect and store user feedback to continuously improve the AI recommendations and prioritizations.
+- **🔧 AI-Powered Tech Stack Recommendation**  
+  - Get **optimized** technology recommendations based on project needs.  
+  - Covers **Frontend, Backend, Databases, Cloud, DevOps, and APIs**.  
+  - Uses **GitHub repository data** to suggest trending technologies.  
+
+- **📋 Intelligent Task Prioritization**  
+  - Break down **projects into structured, step-by-step tasks**.  
+  - Prioritizes tasks based on **dependencies, deadlines, and impact**.  
+
+- **📝 Adaptive AI Feedback System**  
+  - Collects **user ratings and feedback** to refine AI-generated recommendations.  
+  - Dynamically adjusts **prompt structures** to improve accuracy.  
 
 ---
 
@@ -62,10 +70,13 @@
 ## 🎯 Usage
 
 1. **Navigate to the application**: Open your web browser and go to `http://localhost:8501`.
-2. **Choose a feature**: Use the sidebar to select either "Tech Stack Recommendation" or "Task Prioritization".
-3. **Enter project details**: Provide a detailed description of your project.
-4. **Get results**: Click "🔍 Get Results" to receive AI-generated recommendations or prioritizations.
-5. **Provide feedback**: Rate the results and provide additional feedback to help improve the AI's performance.
+2. **Choose a feature**:  
+   - **"Tech Stack Recommendation"** for AI-driven technology choices.  
+   - **"Task Prioritization"** for structured task management.  
+3. **Enter project details**: Provide a detailed project description.
+4. **Get AI-powered results**: Click **"🔍 Get Results"** to receive tailored recommendations.
+5. **Review GitHub insights**: Get **top trending GitHub repositories** related to your project.
+6. **Provide feedback**: Rate the results to improve future recommendations.
 
 ---
 
@@ -73,11 +84,16 @@
 
 ```
 deviq/
-├── backend/                  # Contains the Flask backend code
-├── frontend/                 # Contains the Streamlit frontend code and styles
-├── requirements.txt          # Lists the Python dependencies
-├── .env                      # Stores environment variables (not included in the repository for security reasons)
-└── README.md                 # Project documentation
+├── backend/                  # Flask backend for AI processing
+│   ├── main.py               # Main backend server file
+│   ├── analyze_feedback.py   # Feedback processing and prompt adjustment
+│   ├── requirements.txt      # Python dependencies
+├── frontend/                 # Streamlit-based frontend
+│   ├── app.py                # Main Streamlit application
+│   ├── styles.css            # Custom UI styles
+├── .env                      # Environment variables (not included in repo)
+├── README.md                 # Project documentation
+└── LICENSE                   # License file
 ```
 
 ---
@@ -89,7 +105,7 @@ Contributions are welcome! If you'd like to contribute, please follow these step
 1. **Fork the repository**.
 2. **Create a new branch**:
    ```bash
-   git checkout -b feature/your-feature-nam
+   git checkout -b feature/your-feature-name
    ```
 3. **Commit your changes**:
    ```bash
@@ -113,8 +129,9 @@ This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) f
 
 - **[Streamlit](https://streamlit.io/)** - Frontend framework
 - **[Flask](https://flask.palletsprojects.com/)** - Backend framework
-- **[OpenAI](https://openai.com/)** - AI language models
-- **[LangChain](https://langchain.com/)** - AI integration
+- **[LangChain](https://langchain.com/)** - AI pipeline management
+- **[GitHub API](https://docs.github.com/en/rest)** - Fetch trending repositories
+- **[OpenAI](https://openai.com/)** - AI-powered recommendations
 
 ---
 
@@ -132,9 +149,8 @@ For any questions or feedback, feel free to reach out:
 - **Email**: lily.yishak2@gmail.com
 - **GitHub**: [Birkity](https://github.com/Birkity)
 
-
 ---
 
-Made with ❤️ by **Birkity**.
+**Made with ❤️ by Birkity.**
 
----
+Let me know if you need any changes! 🚀
