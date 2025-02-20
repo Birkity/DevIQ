@@ -1,30 +1,74 @@
 import csv
+import os
+import json
 from collections import Counter
 
-def analyze_feedback(file_path):
-    with open(file_path, mode='r', newline='', encoding='utf-8') as file:
-        reader = csv.reader(file)
-        feedback_data = list(reader)
+FEEDBACK_FILE = "feedback.csv"
+ANALYSIS_FILE = "feedback_analysis.json"
 
-    # Extract ratings and feedback
-    ratings = [int(row[2]) for row in feedback_data if row[2].isdigit()]
-    feedback_texts = [row[3] for row in feedback_data]
+def analyze_feedback():
+    """Analyze feedback data and store results in a JSON file."""
+    try:
+        # Ensure the feedback file exists
+        if not os.path.exists(FEEDBACK_FILE):
+            print("Feedback file does not exist. Skipping analysis.")
+            return
 
-    # Calculate average rating
-    average_rating = sum(ratings) / len(ratings) if ratings else 0
+        with open(FEEDBACK_FILE, mode="r", newline="", encoding="utf-8") as file:
+            reader = csv.reader(file)
+            feedback_data = list(reader)
 
-    # Find common feedback themes
-    feedback_counter = Counter(feedback_texts)
-    common_feedback = feedback_counter.most_common(5)
+        # Check if there's actual data (excluding header)
+        if len(feedback_data) <= 1:
+            print("No feedback data found. Skipping analysis.")
+            return
 
-    # Output results to a file
-    with open('feedback_analysis.txt', 'w') as f:
-        f.write(f"Average Rating: {average_rating}\n")
-        f.write("Common Feedback Themes:\n")
-        for feedback, count in common_feedback:
-            f.write(f"- {feedback} ({count} times)\n")
+        # Extract ratings and feedback text (skip the header row)
+        ratings = []
+        feedback_texts = []
 
-    return average_rating, common_feedback
+        for row in feedback_data[1:]:  # Skip header
+            if len(row) < 4:
+                continue  # Skip incomplete rows
+            
+            # Extract rating
+            try:
+                rating = int(row[2])
+                ratings.append(rating)
+            except ValueError:
+                continue  # Skip invalid ratings
+
+            # Extract feedback text
+            feedback_text = row[3].strip().lower()
+            if feedback_text:
+                feedback_texts.append(feedback_text)
+
+        # Calculate average rating
+        average_rating = round(sum(ratings) / len(ratings), 2) if ratings else 0
+
+        # Identify common feedback themes
+        feedback_counter = Counter(feedback_texts)
+        common_feedback = feedback_counter.most_common(5)
+
+        # Save analysis results to JSON
+        analysis_results = {
+            "average_rating": average_rating,
+            "common_feedback": [{"feedback": fb, "count": count} for fb, count in common_feedback]
+        }
+
+        with open(ANALYSIS_FILE, "w", encoding="utf-8") as f:
+            json.dump(analysis_results, f, indent=4)
+
+        print("✅ Feedback Analysis Completed. Data Saved.")
+
+    except Exception as e:
+        print(f"❌ Error analyzing feedback: {e}")
+
+def ensure_analysis_file():
+    if not os.path.exists(ANALYSIS_FILE):
+        with open(ANALYSIS_FILE, "w", encoding="utf-8") as f:
+            json.dump({"average_rating": 0, "common_feedback": []}, f, indent=4)
 
 if __name__ == "__main__":
-    analyze_feedback('feedback.csv') 
+    ensure_analysis_file()
+    analyze_feedback()
